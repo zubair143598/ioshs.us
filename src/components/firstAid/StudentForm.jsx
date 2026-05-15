@@ -11,6 +11,7 @@ import { studentSchema } from "@/validations/student.validation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import axios from "axios";
+import { courseOptions } from "@/constants/courses";
 
 const StudentForm = ({ open, handleClose }) => {
   const queryClient = useQueryClient();
@@ -26,8 +27,9 @@ const StudentForm = ({ open, handleClose }) => {
     defaultValues: {
       studentName: "",
       email: "",
-      registrationNo: "",
       courseName: "",
+      courseTitle: "",
+      certificateDescription: "",
       result: "PASS",
       issuingBody: "",
       completionDate: "",
@@ -37,10 +39,7 @@ const StudentForm = ({ open, handleClose }) => {
 
   const mutation = useMutation({
     mutationFn: async (data) => {
-      const response = await axios.post(
-        "/api/students",
-        data
-      );
+      const response = await axios.post("/api/students", data);
 
       return response.data;
     },
@@ -54,6 +53,11 @@ const StudentForm = ({ open, handleClose }) => {
 
       handleClose();
     },
+    onError: (error) => {
+      console.log(error);
+
+      alert(error?.response?.data?.message || "Something went wrong");
+    },
   });
 
   const onSubmit = (data) => {
@@ -65,11 +69,8 @@ const StudentForm = ({ open, handleClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-4xl rounded-2xl bg-[#283544] text-white shadow-2xl">
-
         <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
-          <h2 className="text-2xl font-semibold">
-            Add New Student
-          </h2>
+          <h2 className="text-2xl font-semibold">Add New Student</h2>
 
           <button
             onClick={handleClose}
@@ -79,12 +80,8 @@ const StudentForm = ({ open, handleClose }) => {
           </button>
         </div>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="p-6"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-
             <InputField
               label="Student Name"
               name="studentName"
@@ -100,37 +97,47 @@ const StudentForm = ({ open, handleClose }) => {
               errors={errors}
             />
 
-            <InputField
-              label="Registration No"
-              name="registrationNo"
-              register={register}
-              errors={errors}
-            />
+            <div>
+              <label className="mb-2 block text-sm">Course Name</label>
+
+              <select
+                {...register("courseName")}
+                className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none transition duration-300 ease-in-out  focus:border-cyan-400"
+              >
+                <option value="">Select Course</option>
+
+                {courseOptions.map((course) => (
+                  <option key={course} value={course}>
+                    {course}
+                  </option>
+                ))}
+              </select>
+
+              {errors.courseName && (
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.courseName.message}
+                </p>
+              )}
+            </div>
 
             <InputField
-              label="Course Name"
-              name="courseName"
+              label="Course Title"
+              name="courseTitle"
               register={register}
               errors={errors}
             />
 
             <div>
-              <label className="mb-2 block text-sm">
-                Result
-              </label>
+              <label className="mb-2 block text-sm">Result</label>
 
               <select
                 {...register("result")}
-                className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3"
+                className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 transition duration-300 ease-in-out hover:-translate-y-0.5 focus:-translate-y-0.5"
               >
                 <option value="PASS">PASS</option>
                 <option value="FAIL">FAIL</option>
-                <option value="IN PROGRESS">
-                  IN PROGRESS
-                </option>
-                <option value="PENDING">
-                  PENDING
-                </option>
+                <option value="IN PROGRESS">IN PROGRESS</option>
+                <option value="PENDING">PENDING</option>
               </select>
             </div>
 
@@ -157,6 +164,25 @@ const StudentForm = ({ open, handleClose }) => {
             />
           </div>
 
+          <div className="md:col-span-2 pt-3">
+            <label className="mb-2 block text-sm">
+              Certificate Description
+            </label>
+
+            <textarea
+              {...register("certificateDescription")}
+              rows={4}
+              className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none"
+              placeholder="Write certificate description..."
+            />
+
+            {errors.certificateDescription && (
+              <p className="mt-1 text-sm text-red-400">
+                {errors.certificateDescription.message}
+              </p>
+            )}
+          </div>
+
           <div className="mt-8 flex justify-end gap-4">
             <button
               type="button"
@@ -171,9 +197,7 @@ const StudentForm = ({ open, handleClose }) => {
               disabled={mutation.isPending}
               className="rounded-xl bg-cyan-500 px-6 py-3 font-medium text-black"
             >
-              {mutation.isPending
-                ? "Saving..."
-                : "Save Student"}
+              {mutation.isPending ? "Saving..." : "Save Student"}
             </button>
           </div>
         </form>
@@ -184,29 +208,19 @@ const StudentForm = ({ open, handleClose }) => {
 
 export default StudentForm;
 
-const InputField = ({
-  label,
-  name,
-  register,
-  errors,
-  type = "text",
-}) => {
+const InputField = ({ label, name, register, errors, type = "text" }) => {
   return (
     <div>
-      <label className="mb-2 block text-sm">
-        {label}
-      </label>
+      <label className="mb-2 block text-sm">{label}</label>
 
       <input
         type={type}
         {...register(name)}
-        className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3"
+        className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 transition duration-300 ease-in-out hover:-translate-y-0.5 focus:-translate-y-0.5"
       />
 
       {errors[name] && (
-        <p className="mt-1 text-sm text-red-400">
-          {errors[name]?.message}
-        </p>
+        <p className="mt-1 text-sm text-red-400">{errors[name]?.message}</p>
       )}
     </div>
   );

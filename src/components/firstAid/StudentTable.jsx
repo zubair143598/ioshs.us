@@ -1,19 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
-import {
-  Box,
-  IconButton,
-  Tooltip,
-} from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 
-import {
-  DataGrid,
-  GridToolbar,
-} from "@mui/x-data-grid";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import axios from "axios";
 
@@ -21,177 +14,225 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DownloadIcon from "@mui/icons-material/Download";
 
+import EditFirstAid from "./EditFirstAid";
+import DownloadCertificate from "./DownloadCertificate";
+
 const StudentTable = () => {
+  const [editOpen, setEditOpen] = useState(false);
+
+  const [selectedStudent, setSelectedStudent] = useState(null);
+
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const response = await axios.delete(`/api/students/${id}`);
+
+      return response.data;
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["students"],
+      });
+    },
+
+    onError: (error) => {
+      alert(error?.response?.data?.message || "Delete failed");
+    },
+  });
+
   // Fetch Students
   const { data, isLoading } = useQuery({
     queryKey: ["students"],
 
     queryFn: async () => {
-      const response = await axios.get(
-        "/api/students"
-      );
+      const response = await axios.get("/api/students");
 
       return response.data.data;
     },
   });
 
   // Convert MongoDB data for DataGrid
- const rows =
-  data?.map((student, index) => ({
-    id: student._id,
+  const rows =
+    data?.map((student, index) => ({
+      id: student._id,
 
-    serialNo: index + 1,
+      serialNo: index + 1,
+      originalData: student,
 
-    studentName: student.studentName,
+      studentName: student.studentName,
 
-    email: student.email,
+      email: student.email,
 
-    registrationNo: student.registrationNo,
+      registrationNo: student.registrationNo,
 
-    courseName: student.courseName,
+      courseName: student.courseName,
 
-    result: student.result,
+      courseTitle: student.courseTitle,
 
-    issuingBody: student.issuingBody,
+      result: student.result,
 
-    completionDate: new Date(
-      student.completionDate
-    ).toLocaleDateString(),
+      issuingBody: student.issuingBody,
 
-    grade: student.grade,
-  })) || [];
+      completionDate: new Date(student.completionDate).toLocaleDateString(),
 
- const columns = [
-  {
-    field: "serialNo",
-    headerName: "S.No",
-    width: 50,
-  },
+      grade: student.grade,
+    })) || [];
 
-  {
-    field: "studentName",
-    headerName: "Student Name",
-    minWidth: 190,
-    flex: 1,
-  },
+  const columns = [
+    {
+      field: "serialNo",
+      headerName: "S.No",
+      width: 50,
+    },
 
-  {
-    field: "email",
-    headerName: "Email",
-    minWidth: 220,
-    flex: 1,
-  },
+    {
+      field: "studentName",
+      headerName: "Student Name",
+      minWidth: 190,
+      flex: 1,
+    },
 
-  {
-    field: "registrationNo",
-    headerName: "Registration No",
-    minWidth: 150,
-    flex: 1,
-  },
+    {
+      field: "email",
+      headerName: "Email",
+      minWidth: 220,
+      flex: 1,
+    },
 
-  {
-    field: "courseName",
-    headerName: "Course Title",
-    minWidth: 220,
-    flex: 1,
-  },
+    {
+      field: "registrationNo",
+      headerName: "Registration No",
+      minWidth: 150,
+      flex: 1,
+    },
 
-  {
-    field: "issuingBody",
-    headerName: "Issuing Body",
-    minWidth: 150,
-    flex: 1,
-  },
+    {
+      field: "courseName",
+      headerName: "Course Title",
+      minWidth: 220,
+      flex: 1,
+    },
 
-  {
-    field: "completionDate",
-    headerName: "Completion Date",
-    minWidth: 150,
-    flex: 1,
-  },
+    {
+      field: "courseTitle",
+      headerName: "Course Title",
+      minWidth: 220,
+      flex: 1,
+    },
 
-  {
-    field: "grade",
-    headerName: "Grade",
-    width: 100,
-  },
+    {
+      field: "issuingBody",
+      headerName: "Issuing Body",
+      minWidth: 150,
+      flex: 1,
+    },
 
-  {
-    field: "result",
+    {
+      field: "completionDate",
+      headerName: "Completion Date",
+      minWidth: 150,
+      flex: 1,
+    },
 
-    headerName: "Result",
+    {
+      field: "grade",
+      headerName: "Grade",
+      width: 100,
+    },
 
-    minWidth: 160,
+    {
+      field: "result",
 
-    renderCell: (params) => (
-      <span
-        className={`px-3 py-1 rounded-full text-xs font-semibold
+      headerName: "Result",
+
+      minWidth: 160,
+
+      renderCell: (params) => (
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-semibold
         
         ${
           params.value === "PASS"
             ? "bg-green-500/20 text-green-400"
-
             : params.value === "FAIL"
-            ? "bg-red-500/20 text-red-400"
-
-            : params.value === "PENDING"
-            ? "bg-yellow-500/20 text-yellow-400"
-
-            : "bg-blue-500/20 text-blue-400"
+              ? "bg-red-500/20 text-red-400"
+              : params.value === "PENDING"
+                ? "bg-yellow-500/20 text-yellow-400"
+                : "bg-blue-500/20 text-blue-400"
         }`}
-      >
-        {params.value}
-      </span>
-    ),
-  },
+        >
+          {params.value}
+        </span>
+      ),
+    },
 
-  {
-    field: "actions",
+    {
+      field: "actions",
 
-    headerName: "Action",
+      headerName: "Action",
 
-    minWidth: 190,
+      minWidth: 190,
 
-    sortable: false,
+      sortable: false,
 
-    renderCell: () => (
-      <div className="flex items-center gap-2">
-        {/* Edit */}
-        <Tooltip title="Edit">
-          <IconButton>
-            <EditIcon
-              sx={{
-                color: "#06b6d4",
+      renderCell: (params) => (
+        <div className="flex items-center gap-2">
+          {/* Edit */}
+          <Tooltip title="Edit">
+            <IconButton
+              onClick={() => {
+                setSelectedStudent(params.row.originalData);
+
+                setEditOpen(true);
               }}
-            />
-          </IconButton>
-        </Tooltip>
+            >
+              <EditIcon
+                sx={{
+                  color: "#06b6d4",
+                }}
+              />
+            </IconButton>
+          </Tooltip>
 
-        {/* Delete */}
-        <Tooltip title="Delete">
-          <IconButton>
-            <DeleteIcon
-              sx={{
-                color: "#ef4444",
-              }}
-            />
-          </IconButton>
-        </Tooltip>
+          {/* Delete */}
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={() => {
+                const confirmDelete = window.confirm(
+                  "Are you sure you want to delete this student?",
+                );
 
-        {/* Download */}
-        <Tooltip title="Download Certificate">
-          <IconButton>
-            <DownloadIcon
-              sx={{
-                color: "#facc15",
+                if (confirmDelete) {
+                  deleteMutation.mutate(params.row.id);
+                }
               }}
-            />
-          </IconButton>
-        </Tooltip>
-      </div>
-    ),
-  },
-];
+            >
+              <DeleteIcon
+                sx={{
+                  color: "#ef4444",
+                }}
+              />
+            </IconButton>
+          </Tooltip>
+
+          {/* Download */}
+          <Tooltip title="Download Certificate">
+            <IconButton
+              onClick={() => DownloadCertificate(params.row.originalData)}
+            >
+              <DownloadIcon
+                sx={{
+                  color: "#facc15",
+                }}
+              />
+            </IconButton>
+          </Tooltip>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div
@@ -208,11 +249,9 @@ const StudentTable = () => {
         columns={columns}
         loading={isLoading}
         disableRowSelectionOnClick
-
         slots={{
           toolbar: GridToolbar,
         }}
-
         initialState={{
           pagination: {
             paginationModel: {
@@ -220,9 +259,7 @@ const StudentTable = () => {
             },
           },
         }}
-
         pageSizeOptions={[20, 30, 50]}
-
         sx={{
           backgroundColor: "#111827",
 
@@ -243,8 +280,7 @@ const StudentTable = () => {
           },
 
           "& .MuiDataGrid-row:hover": {
-            backgroundColor:
-              "rgba(6, 182, 212, 0.15) !important",
+            backgroundColor: "rgba(6, 182, 212, 0.15) !important",
 
             color: "#22d3ee",
           },
@@ -265,10 +301,20 @@ const StudentTable = () => {
           "& .MuiButton-text": {
             color: "#22d3ee",
           },
-          "& .MuiDataGrid-sortButton":{
-            background:'#1F2937 !important',
-          }
+          "& .MuiDataGrid-sortButton": {
+            background: "#1F2937 !important",
+          },
         }}
+      />
+
+      <EditFirstAid
+        open={editOpen}
+        handleClose={() => {
+          setEditOpen(false);
+
+          setSelectedStudent(null);
+        }}
+        student={selectedStudent}
       />
     </div>
   );

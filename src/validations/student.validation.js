@@ -1,38 +1,26 @@
 import { z } from "zod";
 
+import { courseOptions } from "@/constants/courses";
+
 export const studentSchema = z.object({
   studentName: z
     .string()
+    .trim()
     .min(3, "Student name must be at least 3 characters"),
 
-  email: z
-    .string()
-    .email("Invalid email"),
+  email: z.string().trim().email("Invalid email"),
 
-  registrationNo: z
-    .string()
-    .min(2, "Registration number is required"),
+  courseName: z.enum(courseOptions),
 
-  courseName: z
-    .string()
-    .min(2, "Course name is required"),
+  courseTitle: z.string().trim().min(3, "Course title is required"),
 
-  result: z.enum([
-    "PASS",
-    "FAIL",
-    "IN PROGRESS",
-    "PENDING",
-  ]),
+  certificateDescription: z.string().trim().min(10, "Description must be at least 10 characters"),
 
-  issuingBody: z
-    .string()
-    .min(2, "Issuing body is required"),
+  result: z.enum(["PASS", "FAIL", "IN PROGRESS", "PENDING"]),
 
-  completionDate: z
-    .string()
-    .min(1, "Completion date is required"),
+  issuingBody: z.string().trim().min(2, "Issuing body is required"),
 
-  grade: z
-    .string()
-    .min(1, "Grade is required"),
+  completionDate: z.string().min(1, "Completion date is required"),
+
+  grade: z.string().trim().min(1, "Grade is required"),
 });

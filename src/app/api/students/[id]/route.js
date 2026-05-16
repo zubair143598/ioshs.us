@@ -22,6 +22,8 @@ export async function PUT(req, { params }) {
           email: body.email.toLowerCase(),
 
           courseTitle: body.courseTitle,
+          
+          courseName: body.courseName,
 
           result: body.result,
 

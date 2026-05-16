@@ -3,9 +3,9 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 const DownloadCertificate = async (student) => {
   try {
     // Load PDF template
-    const existingPdfBytes = await fetch(
-      "/templete/FIRST_AID.pdf"
-    ).then((res) => res.arrayBuffer());
+    const existingPdfBytes = await fetch("/templete/FIRST_AID.pdf").then(
+      (res) => res.arrayBuffer(),
+    );
 
     const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
@@ -14,13 +14,9 @@ const DownloadCertificate = async (student) => {
     const { width, height } = firstPage.getSize();
 
     // Fonts
-    const font = await pdfDoc.embedFont(
-      StandardFonts.HelveticaBold
-    );
+    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    const italicFont = await pdfDoc.embedFont(
-      StandardFonts.HelveticaOblique
-    );
+    const italicFont = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
 
     const textStyle = {
       font,
@@ -28,50 +24,45 @@ const DownloadCertificate = async (student) => {
     };
 
     // Center helper
-    const getCenteredX = (text, size) => {
-      const textWidth =
-        font.widthOfTextAtSize(text, size);
+    const getCenteredX = (text, size, selectedFont = font) => {
+      const safeText = String(text || "");
+
+      const textWidth = selectedFont.widthOfTextAtSize(safeText, size);
+
       return (width - textWidth) / 2;
     };
-
+    
     // FIX: wrapText function (MISSING BEFORE)
     const wrapText = (text, font, size, maxWidth) => {
-      if (!text) return [];
+  if (!text || typeof text !== "string") return [];
 
-      const words = text.split(" ");
-      const lines = [];
-      let line = "";
+  const words = text.split(" ");
+  const lines = [];
+  let line = "";
 
-      for (let word of words) {
-        const testLine = line
-          ? line + " " + word
-          : word;
+  for (let word of words) {
+    const testLine = line ? line + " " + word : word;
 
-        const width =
-          font.widthOfTextAtSize(testLine, size);
+    const lineWidth = font.widthOfTextAtSize(testLine, size);
 
-        if (width > maxWidth) {
-          lines.push(line);
-          line = word;
-        } else {
-          line = testLine;
-        }
-      }
-
+    if (lineWidth > maxWidth) {
       if (line) lines.push(line);
+      line = word;
+    } else {
+      line = testLine;
+    }
+  }
 
-      return lines;
-    };
+  if (line) lines.push(line);
+
+  return lines;
+};
 
     // Title Case Name
     const studentName = student.studentName
       .toLowerCase()
       .split(" ")
-      .map(
-        (word) =>
-          word.charAt(0).toUpperCase() +
-          word.slice(1)
-      )
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
 
     // ========================
@@ -103,28 +94,21 @@ const DownloadCertificate = async (student) => {
     // ========================
     // DESCRIPTION (WRAP + CENTER + ITALIC)
     // ========================
-    const description =
-      student.certificateDescription || "";
+   const description =
+  typeof student.certificateDescription === "string"
+    ? student.certificateDescription
+    : "";
 
     const descFontSize = 16;
 
     const maxWidth = width * 0.75;
 
-    const lines = wrapText(
-      description,
-      italicFont,
-      descFontSize,
-      maxWidth
-    );
+    const lines = wrapText(description, italicFont, descFontSize, maxWidth);
 
     const startY = height - 270;
 
     lines.forEach((line, index) => {
-      const textWidth =
-        italicFont.widthOfTextAtSize(
-          line,
-          descFontSize
-        );
+      const textWidth = italicFont.widthOfTextAtSize(line, descFontSize);
 
       const x = (width - textWidth) / 2;
 
@@ -140,13 +124,14 @@ const DownloadCertificate = async (student) => {
     // ========================
     // COMPLETION DATE (CENTER)
     // ========================
-    const formattedDate = new Date(
-      student.completionDate
-    ).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
+    const formattedDate = new Date(student.completionDate).toLocaleDateString(
+      "en-GB",
+      {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      },
+    );
 
     const dateFontSize = 14;
 
@@ -169,7 +154,9 @@ const DownloadCertificate = async (student) => {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = `${student.studentName}-certificate.pdf`;
+    link.download = `${student.studentName
+  .replace(/\s+/g, "-")
+  .toLowerCase()}-certificate.pdf`;
 
     document.body.appendChild(link);
     link.click();

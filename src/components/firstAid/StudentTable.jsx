@@ -71,6 +71,9 @@ const StudentTable = () => {
 
       courseTitle: student.courseTitle,
 
+      certificateDescription:
+  student.certificateDescription,
+
       result: student.result,
 
       issuingBody: student.issuingBody,

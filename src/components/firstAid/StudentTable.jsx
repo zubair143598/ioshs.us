@@ -71,8 +71,7 @@ const StudentTable = () => {
 
       courseTitle: student.courseTitle,
 
-      certificateDescription:
-  student.certificateDescription,
+      certificateDescription: student.certificateDescription,
 
       result: student.result,
 
@@ -186,9 +185,13 @@ const StudentTable = () => {
           <Tooltip title="Edit">
             <IconButton
               onClick={() => {
-                setSelectedStudent(params.row.originalData);
+                setEditOpen(false);
 
-                setEditOpen(true);
+                setTimeout(() => {
+                  setSelectedStudent(params.row.originalData);
+
+                  setEditOpen(true);
+                }, 0);
               }}
             >
               <EditIcon
@@ -311,10 +314,10 @@ const StudentTable = () => {
       />
 
       <EditFirstAid
+        key={selectedStudent?._id}
         open={editOpen}
         handleClose={() => {
           setEditOpen(false);
-
           setSelectedStudent(null);
         }}
         student={selectedStudent}

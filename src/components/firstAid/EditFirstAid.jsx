@@ -60,12 +60,33 @@ const EditFirstAid = ({ open, handleClose, student }) => {
     }
   }, [student, reset]);
 
-  const mutation = useMutation({
-    mutationFn: async (data) => {
-      const response = await axios.put(`/api/students/${student._id}`, data);
+  useEffect(() => {
+    if (!open) {
+      reset({
+        studentName: "",
+        email: "",
+        courseName: "",
+        courseTitle: "",
+        certificateDescription: "",
+        result: "PASS",
+        issuingBody: "",
+        completionDate: "",
+        grade: "",
+      });
+    }
+  }, [open, reset]);
 
-      return response.data;
-    },
+  const mutation = useMutation({
+   mutationFn: async (data) => {
+  console.log("Submitting Data:", data);
+
+  const response = await axios.put(
+    `/api/students/${student._id}`,
+    data
+  );
+
+  return response.data;
+},
 
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -80,9 +101,11 @@ const EditFirstAid = ({ open, handleClose, student }) => {
     },
   });
 
-  const onSubmit = (data) => {
-    mutation.mutate(data);
-  };
+ const onSubmit = async (data) => {
+  console.log("Updated Form Data:", data);
+
+  mutation.mutate(data);
+};
 
   if (!open) return null;
 
@@ -167,24 +190,23 @@ const EditFirstAid = ({ open, handleClose, student }) => {
             />
 
             <div className="md:col-span-2 pt-3">
-            <label className="mb-2 block text-sm">
-              Certificate Description
-            </label>
+              <label className="mb-2 block text-sm">
+                Certificate Description
+              </label>
 
-            <textarea
-              {...register("certificateDescription")}
-              rows={4}
-              className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none"
-              placeholder="Write certificate description..."
-            />
+              <textarea
+                {...register("certificateDescription")}
+                rows={4}
+                className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none"
+                placeholder="Write certificate description..."
+              />
 
-            {errors.certificateDescription && (
-              <p className="mt-1 text-sm text-red-400">
-                {errors.certificateDescription.message}
-              </p>
-            )}
-          </div>
-
+              {errors.certificateDescription && (
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.certificateDescription.message}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Buttons */}

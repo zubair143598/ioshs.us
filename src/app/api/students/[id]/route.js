@@ -51,9 +51,8 @@ export async function PUT(req, context) {
       returnDocument: "after",
     });
 
-    return NextResponse.json({
-      success: true,
-      data: updatedStudent,
+    const updatedStudent = await Student.findByIdAndUpdate(params.id, body, {
+      returnDocument: "after",
     });
   } catch (error) {
     console.log(error);
@@ -100,7 +99,7 @@ export async function DELETE(req, context) {
         success: false,
         message: "Server Error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

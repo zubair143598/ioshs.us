@@ -45,7 +45,7 @@ export default function Sidebar({ open, setOpen }) {
 
   return (
     <div
-      className={`bg-[#293038] text-white h-screen transition-all duration-300 border-r border-gray-800
+      className={`bg-[#293038] text-white transition-all duration-300 border-r border-gray-800
       ${open ? "w-64" : "w-20"}
        md:relative z-50`}
     >

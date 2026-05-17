@@ -50,10 +50,6 @@ export async function PUT(req, context) {
     const updatedStudent = await Student.findByIdAndUpdate(params.id, body, {
       returnDocument: "after",
     });
-
-    const updatedStudent = await Student.findByIdAndUpdate(params.id, body, {
-      returnDocument: "after",
-    });
   } catch (error) {
     console.log(error);
 

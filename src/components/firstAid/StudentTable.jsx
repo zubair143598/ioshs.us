@@ -6,7 +6,7 @@ import { Box, IconButton, Tooltip } from "@mui/material";
 
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery,  useMutation, useQueryClient } from "@tanstack/react-query";
 
 import axios from "axios";
 
@@ -27,6 +27,24 @@ const StudentTable = ({ handleEdit }) => {
       return response.data.data;
     },
   });
+
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+  mutationFn: async (id) => {
+    const response = await axios.delete(`/api/students/${id}`);
+    return response.data;
+  },
+
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["students"] });
+  },
+
+  onError: (error) => {
+    console.log(error);
+    alert(error?.response?.data?.message || "Delete failed");
+  },
+});
 
   // Convert MongoDB data for DataGrid
   const rows =
@@ -164,16 +182,17 @@ const StudentTable = ({ handleEdit }) => {
           </Tooltip>
 
           {/* Delete */}
-          <Tooltip title="Delete">
-            <IconButton>
-              <DeleteIcon
-                sx={{
-                  color: "#ef4444",
-                }}
-              />
-            </IconButton>
-          </Tooltip>
-
+         <Tooltip title="Delete">
+  <IconButton
+    onClick={() => {
+      if (confirm("Are you sure you want to delete this student?")) {
+        deleteMutation.mutate(params.row.id);
+      }
+    }}
+  >
+    <DeleteIcon sx={{ color: "#ef4444" }} />
+  </IconButton>
+</Tooltip>
           {/* Download */}
           <Tooltip title="Download Certificate">
             <IconButton

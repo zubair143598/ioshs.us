@@ -1,16 +1,12 @@
 "use client";
 
 import React, { useEffect } from "react";
-
 import { useForm } from "react-hook-form";
-
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
 import axios from "axios";
-
 import { studentSchema } from "@/validations/student.validation";
+import { courseOptions } from "@/constants/courses";
 
 const EditFirstAid = ({ open, handleClose, student }) => {
   const queryClient = useQueryClient();
@@ -22,7 +18,6 @@ const EditFirstAid = ({ open, handleClose, student }) => {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(studentSchema),
-
     defaultValues: {
       studentName: "",
       email: "",
@@ -36,55 +31,54 @@ const EditFirstAid = ({ open, handleClose, student }) => {
     },
   });
 
-  // Prefill Data
+  // Reset form when student changes or modal opens
   useEffect(() => {
-    if (student) {
+    if (student && open) {
       reset({
         studentName: student.studentName || "",
-
         email: student.email || "",
-
         courseName: student.courseName || "",
-
         courseTitle: student.courseTitle || "",
-        certificateDescription: student?.certificateDescription || "",
-
+        certificateDescription: student.certificateDescription || "",
         result: student.result || "PASS",
-
         issuingBody: student.issuingBody || "",
-
-        completionDate: student.completionDate?.split("T")[0] || "",
-
+        completionDate: student.completionDate
+          ? new Date(student.completionDate).toISOString().split("T")[0]
+          : "",
         grade: student.grade || "",
       });
     }
-  }, [student, reset]);
+  }, [student, open, reset]);
 
   const mutation = useMutation({
     mutationFn: async (data) => {
-      const response = await axios.put(`/api/students/${student._id}`, data);
-
+      // Make sure we're sending the correct data
+      const payload = {
+        ...data,
+        email: data.email.toLowerCase(),
+      };
+      const response = await axios.put(`/api/students/${student._id}`, payload);
       return response.data;
     },
-
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["students"],
       });
-
       handleClose();
     },
-
     onError: (error) => {
+      console.error("Update error:", error);
       alert(error?.response?.data?.message || "Something went wrong");
     },
   });
 
   const onSubmit = (data) => {
-    mutation.mutate(data);
-  };
+  console.log("Form data being submitted:", data); // Check what's being sent
+  console.log("Expected result:", data.result); // Should show "PASS"
+  mutation.mutate(data);
+};
 
-  if (!open) return null;
+  if (!open || !student) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -92,7 +86,6 @@ const EditFirstAid = ({ open, handleClose, student }) => {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
           <h2 className="text-2xl font-semibold">Edit Student</h2>
-
           <button
             onClick={handleClose}
             className="rounded-lg bg-red-500 px-3 py-1 text-sm"
@@ -110,7 +103,6 @@ const EditFirstAid = ({ open, handleClose, student }) => {
               register={register}
               errors={errors}
             />
-
             <InputField
               label="Email"
               name="email"
@@ -119,6 +111,26 @@ const EditFirstAid = ({ open, handleClose, student }) => {
               errors={errors}
             />
 
+            <div>
+              <label className="mb-2 block text-sm">Course Name</label>
+              <select
+                {...register("courseName")}
+                className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none"
+              >
+                <option value="">Select Course</option>
+                {courseOptions.map((course) => (
+                  <option key={course} value={course}>
+                    {course}
+                  </option>
+                ))}
+              </select>
+              {errors.courseName && (
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.courseName.message}
+                </p>
+              )}
+            </div>
+
             <InputField
               label="Course Title"
               name="courseTitle"
@@ -126,20 +138,15 @@ const EditFirstAid = ({ open, handleClose, student }) => {
               errors={errors}
             />
 
-            {/* Result */}
             <div>
               <label className="mb-2 block text-sm">Result</label>
-
               <select
                 {...register("result")}
                 className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3"
               >
                 <option value="PASS">PASS</option>
-
                 <option value="FAIL">FAIL</option>
-
                 <option value="IN PROGRESS">IN PROGRESS</option>
-
                 <option value="PENDING">PENDING</option>
               </select>
             </div>
@@ -150,7 +157,6 @@ const EditFirstAid = ({ open, handleClose, student }) => {
               register={register}
               errors={errors}
             />
-
             <InputField
               label="Completion Date"
               name="completionDate"
@@ -158,7 +164,6 @@ const EditFirstAid = ({ open, handleClose, student }) => {
               register={register}
               errors={errors}
             />
-
             <InputField
               label="Grade"
               name="grade"
@@ -167,24 +172,21 @@ const EditFirstAid = ({ open, handleClose, student }) => {
             />
 
             <div className="md:col-span-2 pt-3">
-            <label className="mb-2 block text-sm">
-              Certificate Description
-            </label>
-
-            <textarea
-              {...register("certificateDescription")}
-              rows={4}
-              className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none"
-              placeholder="Write certificate description..."
-            />
-
-            {errors.certificateDescription && (
-              <p className="mt-1 text-sm text-red-400">
-                {errors.certificateDescription.message}
-              </p>
-            )}
-          </div>
-
+              <label className="mb-2 block text-sm">
+                Certificate Description
+              </label>
+              <textarea
+                {...register("certificateDescription")}
+                rows={4}
+                className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none"
+                placeholder="Write certificate description..."
+              />
+              {errors.certificateDescription && (
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.certificateDescription.message}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Buttons */}
@@ -196,7 +198,6 @@ const EditFirstAid = ({ open, handleClose, student }) => {
             >
               Cancel
             </button>
-
             <button
               type="submit"
               disabled={mutation.isPending}
@@ -217,13 +218,11 @@ const InputField = ({ label, name, register, errors, type = "text" }) => {
   return (
     <div>
       <label className="mb-2 block text-sm">{label}</label>
-
       <input
         type={type}
         {...register(name)}
         className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3"
       />
-
       {errors[name] && (
         <p className="mt-1 text-sm text-red-400">{errors[name]?.message}</p>
       )}

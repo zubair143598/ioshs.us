@@ -6,7 +6,7 @@ import { Box, IconButton, Tooltip } from "@mui/material";
 
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import axios from "axios";
 
@@ -14,34 +14,9 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DownloadIcon from "@mui/icons-material/Download";
 
-import EditFirstAid from "./EditFirstAid";
 import DownloadCertificate from "./DownloadCertificate";
 
-const StudentTable = () => {
-  const [editOpen, setEditOpen] = useState(false);
-
-  const [selectedStudent, setSelectedStudent] = useState(null);
-
-  const queryClient = useQueryClient();
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id) => {
-      const response = await axios.delete(`/api/students/${id}`);
-
-      return response.data;
-    },
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["students"],
-      });
-    },
-
-    onError: (error) => {
-      alert(error?.response?.data?.message || "Delete failed");
-    },
-  });
-
+const StudentTable = ({ handleEdit }) => {
   // Fetch Students
   const { data, isLoading } = useQuery({
     queryKey: ["students"],
@@ -71,8 +46,7 @@ const StudentTable = () => {
 
       courseTitle: student.courseTitle,
 
-      certificateDescription:
-  student.certificateDescription,
+      certificateDescription: student.certificateDescription,
 
       result: student.result,
 
@@ -184,34 +158,14 @@ const StudentTable = () => {
         <div className="flex items-center gap-2">
           {/* Edit */}
           <Tooltip title="Edit">
-            <IconButton
-              onClick={() => {
-                setSelectedStudent(params.row.originalData);
-
-                setEditOpen(true);
-              }}
-            >
-              <EditIcon
-                sx={{
-                  color: "#06b6d4",
-                }}
-              />
+            <IconButton onClick={() => handleEdit(params.row.originalData)}>
+              <EditIcon sx={{ color: "#06b6d4" }} />
             </IconButton>
           </Tooltip>
 
           {/* Delete */}
           <Tooltip title="Delete">
-            <IconButton
-              onClick={() => {
-                const confirmDelete = window.confirm(
-                  "Are you sure you want to delete this student?",
-                );
-
-                if (confirmDelete) {
-                  deleteMutation.mutate(params.row.id);
-                }
-              }}
-            >
+            <IconButton>
               <DeleteIcon
                 sx={{
                   color: "#ef4444",
@@ -308,16 +262,6 @@ const StudentTable = () => {
             background: "#1F2937 !important",
           },
         }}
-      />
-
-      <EditFirstAid
-        open={editOpen}
-        handleClose={() => {
-          setEditOpen(false);
-
-          setSelectedStudent(null);
-        }}
-        student={selectedStudent}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 
 import { useForm } from "react-hook-form";
 
@@ -13,15 +13,16 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { courseOptions } from "@/constants/courses";
 
-const StudentForm = ({ open, handleClose }) => {
+const StudentForm = ({ open, handleClose, student }) => {
   const queryClient = useQueryClient();
 
   const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm({
+  register,
+  handleSubmit,
+  reset,
+  setValue,
+  formState: { errors },
+} = useForm({
     resolver: zodResolver(studentSchema),
 
     defaultValues: {
@@ -37,28 +38,77 @@ const StudentForm = ({ open, handleClose }) => {
     },
   });
 
+  useEffect(() => {
+  if (student) {
+    setValue("studentName", student.studentName);
+
+    setValue("email", student.email);
+
+    setValue("courseName", student.courseName);
+
+    setValue("courseTitle", student.courseTitle);
+
+    setValue(
+      "certificateDescription",
+      student.certificateDescription
+    );
+
+    setValue("result", student.result);
+
+    setValue("issuingBody", student.issuingBody);
+
+    setValue(
+      "completionDate",
+      student.completionDate.split("T")[0]
+    );
+
+    setValue("grade", student.grade);
+  } else {
+    reset();
+  }
+}, [student, setValue, reset]);
+
   const mutation = useMutation({
-    mutationFn: async (data) => {
-      const response = await axios.post("/api/students", data);
+  mutationFn: async (data) => {
+
+    // EDIT
+    if (student) {
+      const response = await axios.put(
+        `/api/students/${student._id}`,
+        data
+      );
 
       return response.data;
-    },
+    }
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["students"],
-      });
+    // CREATE
+    const response = await axios.post(
+      "/api/students",
+      data
+    );
 
-      reset();
+    return response.data;
+  },
 
-      handleClose();
-    },
-    onError: (error) => {
-      console.log(error);
+  onSuccess: () => {
+    queryClient.invalidateQueries({
+      queryKey: ["students"],
+    });
 
-      alert(error?.response?.data?.message || "Something went wrong");
-    },
-  });
+    reset();
+
+    handleClose();
+  },
+
+  onError: (error) => {
+    console.log(error);
+
+    alert(
+      error?.response?.data?.message ||
+      "Something went wrong"
+    );
+  },
+});
 
   const onSubmit = (data) => {
     mutation.mutate(data);
@@ -70,7 +120,9 @@ const StudentForm = ({ open, handleClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-4xl rounded-2xl bg-[#283544] text-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
-          <h2 className="text-2xl font-semibold">Add New Student</h2>
+          <h2 className="text-2xl font-semibold">
+  {student ? "Edit Student" : "Add New Student"}
+</h2>
 
           <button
             onClick={handleClose}
@@ -101,9 +153,10 @@ const StudentForm = ({ open, handleClose }) => {
               <label className="mb-2 block text-sm">Course Name</label>
 
               <select
-                {...register("courseName")}
-                className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none transition duration-300 ease-in-out  focus:border-cyan-400"
-              >
+  {...register("courseName")}
+  disabled={!!student}
+  className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none transition duration-300 ease-in-out focus:border-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
+>
                 <option value="">Select Course</option>
 
                 {courseOptions.map((course) => (
@@ -197,7 +250,13 @@ const StudentForm = ({ open, handleClose }) => {
               disabled={mutation.isPending}
               className="rounded-xl bg-cyan-500 px-6 py-3 font-medium text-black"
             >
-              {mutation.isPending ? "Saving..." : "Save Student"}
+              {mutation.isPending
+  ? student
+    ? "Updating..."
+    : "Saving..."
+  : student
+    ? "Update Student"
+    : "Save Student"}
             </button>
           </div>
         </form>

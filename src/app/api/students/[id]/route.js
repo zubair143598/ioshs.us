@@ -2,45 +2,54 @@ import dbConnect from "@/lib/db";
 
 import Student from "@/models/studentForm.model";
 
+import { studentSchema } from "@/validations/student.validation";
+
 import { NextResponse } from "next/server";
 
-export async function PUT(req, { params }) {
+export async function PUT(req, context) {
   try {
     await dbConnect();
 
-    // Await params
-    const { id } = await params;
+    // FIX
+    const params = await context.params;
 
     const body = await req.json();
 
-    const updatedStudent =
-      await Student.findByIdAndUpdate(
-        id,
+    body.email = body.email.toLowerCase();
+
+    // Find existing student
+    const existingStudent = await Student.findById(params.id);
+
+    if (!existingStudent) {
+      return NextResponse.json(
         {
-          studentName: body.studentName,
-
-          email: body.email.toLowerCase(),
-
-          courseTitle: body.courseTitle,
-          
-          courseName: body.courseName,
-
-          result: body.result,
-
-          issuingBody: body.issuingBody,
-
-          certificateDescription: body.certificateDescription,
-
-          completionDate:
-            body.completionDate,
-
-          grade: body.grade,
+          success: false,
+          message: "Student not found",
         },
-
-        {
-          returnDocument: "after",
-        }
+        { status: 404 },
       );
+    }
+
+    // Prevent editing these fields
+    body.registrationNo = existingStudent.registrationNo;
+
+    body.courseName = existingStudent.courseName;
+
+    const validation = studentSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          errors: validation.error.flatten(),
+        },
+        { status: 400 },
+      );
+    }
+
+    const updatedStudent = await Student.findByIdAndUpdate(params.id, body, {
+      returnDocument: "after",
+    });
 
     return NextResponse.json({
       success: true,
@@ -54,37 +63,7 @@ export async function PUT(req, { params }) {
         success: false,
         message: "Server Error",
       },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE STUDENT
-export async function DELETE(
-  req,
-  { params }
-) {
-  try {
-    await dbConnect();
-
-    const { id } = await params;
-
-    await Student.findByIdAndDelete(id);
-
-    return NextResponse.json({
-      success: true,
-      message:
-        "Student deleted successfully",
-    });
-  } catch (error) {
-    console.log(error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Server Error",
-      },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

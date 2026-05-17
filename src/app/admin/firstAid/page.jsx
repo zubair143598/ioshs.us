@@ -14,6 +14,23 @@ import StudentTable from "@/components/firstAid/StudentTable";
 const FirstAidPage = () => {
   const [open, setOpen] = useState(false);
 
+  // NEW
+  const [selectedStudent, setSelectedStudent] = useState(null);
+
+  // NEW
+  const handleEdit = (student) => {
+    setSelectedStudent(student);
+
+    setOpen(true);
+  };
+
+  // NEW
+  const handleClose = () => {
+    setOpen(false);
+
+    setSelectedStudent(null);
+  };
+
   return (
     <div className="min-h-screen bg-[#0B1120] p-4 text-white md:p-8">
 
@@ -21,7 +38,11 @@ const FirstAidPage = () => {
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row">
         <Button
           variant="contained"
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setSelectedStudent(null);
+
+            setOpen(true);
+          }}
         >
           Add New Student
         </Button>
@@ -48,12 +69,13 @@ const FirstAidPage = () => {
       </div>
 
       {/* Students Table */}
-      <StudentTable />
+      <StudentTable handleEdit={handleEdit} />
 
       {/* Student Form */}
       <StudentForm
         open={open}
-        handleClose={() => setOpen(false)}
+        handleClose={handleClose}
+        student={selectedStudent}
       />
     </div>
   );

@@ -105,7 +105,7 @@ const StudentTable = ({ handleEdit }) => {
 
     {
       field: "courseName",
-      headerName: "Course Title",
+      headerName: "Course Name",
       minWidth: 220,
       flex: 1,
     },

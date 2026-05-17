@@ -17,12 +17,12 @@ const StudentForm = ({ open, handleClose, student }) => {
   const queryClient = useQueryClient();
 
   const {
-  register,
-  handleSubmit,
-  reset,
-  setValue,
-  formState: { errors },
-} = useForm({
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm({
     resolver: zodResolver(studentSchema),
 
     defaultValues: {
@@ -39,76 +39,60 @@ const StudentForm = ({ open, handleClose, student }) => {
   });
 
   useEffect(() => {
-  if (student) {
-    setValue("studentName", student.studentName);
+    if (student) {
+      setValue("studentName", student.studentName);
 
-    setValue("email", student.email);
+      setValue("email", student.email);
 
-    setValue("courseName", student.courseName);
+      setValue("courseName", student.courseName);
 
-    setValue("courseTitle", student.courseTitle);
+      setValue("courseTitle", student.courseTitle);
 
-    setValue(
-      "certificateDescription",
-      student.certificateDescription
-    );
+      setValue("certificateDescription", student.certificateDescription);
 
-    setValue("result", student.result);
+      setValue("result", student.result);
 
-    setValue("issuingBody", student.issuingBody);
+      setValue("issuingBody", student.issuingBody);
 
-    setValue(
-      "completionDate",
-      student.completionDate.split("T")[0]
-    );
+      setValue("completionDate", student.completionDate.split("T")[0]);
 
-    setValue("grade", student.grade);
-  } else {
-    reset();
-  }
-}, [student, setValue, reset]);
+      setValue("grade", student.grade);
+    } else {
+      reset();
+    }
+  }, [student, setValue, reset]);
 
   const mutation = useMutation({
-  mutationFn: async (data) => {
+    mutationFn: async (data) => {
+      // EDIT
+      if (student) {
+        const response = await axios.put(`/api/students/${student._id}`, data);
 
-    // EDIT
-    if (student) {
-      const response = await axios.put(
-        `/api/students/${student._id}`,
-        data
-      );
+        return response.data;
+      }
+
+      // CREATE
+      const response = await axios.post("/api/students", data);
 
       return response.data;
-    }
+    },
 
-    // CREATE
-    const response = await axios.post(
-      "/api/students",
-      data
-    );
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["students"],
+      });
 
-    return response.data;
-  },
+      reset();
 
-  onSuccess: () => {
-    queryClient.invalidateQueries({
-      queryKey: ["students"],
-    });
+      handleClose();
+    },
 
-    reset();
+    onError: (error) => {
+      console.log(error);
 
-    handleClose();
-  },
-
-  onError: (error) => {
-    console.log(error);
-
-    alert(
-      error?.response?.data?.message ||
-      "Something went wrong"
-    );
-  },
-});
+      alert(error?.response?.data?.message || "Something went wrong");
+    },
+  });
 
   const onSubmit = (data) => {
     mutation.mutate(data);
@@ -117,12 +101,12 @@ const StudentForm = ({ open, handleClose, student }) => {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-4xl rounded-2xl bg-[#283544] text-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
+    <div className="fixed inset-0 z-50 bg-black/60 p-4 flex items-center justify-center">
+      <div className="w-full max-w-4xl max-h-[90vh] rounded-2xl bg-[#283544] text-white shadow-2xl flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4 shrink-0">
           <h2 className="text-2xl font-semibold">
-  {student ? "Edit Student" : "Add New Student"}
-</h2>
+            {student ? "Edit Student" : "Add New Student"}
+          </h2>
 
           <button
             onClick={handleClose}
@@ -132,8 +116,8 @@ const StudentForm = ({ open, handleClose, student }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6">
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <form onSubmit={handleSubmit(onSubmit)}   className="p-6 flex-1 overflow-y-auto no-scrollbar">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 ">
             <InputField
               label="Student Name"
               name="studentName"
@@ -153,10 +137,10 @@ const StudentForm = ({ open, handleClose, student }) => {
               <label className="mb-2 block text-sm">Course Name</label>
 
               <select
-  {...register("courseName")}
-  disabled={!!student}
-  className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none transition duration-300 ease-in-out focus:border-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
->
+                {...register("courseName")}
+                disabled={!!student}
+                className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none transition duration-300 ease-in-out focus:border-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
                 <option value="">Select Course</option>
 
                 {courseOptions.map((course) => (
@@ -215,28 +199,28 @@ const StudentForm = ({ open, handleClose, student }) => {
               register={register}
               errors={errors}
             />
+
+            <div className="md:col-span-2 pt-3">
+              <label className="mb-2 block text-sm">
+                Certificate Description
+              </label>
+
+              <textarea
+                {...register("certificateDescription")}
+                rows={4}
+                className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none"
+                placeholder="Write certificate description..."
+              />
+
+              {errors.certificateDescription && (
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.certificateDescription.message}
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="md:col-span-2 pt-3">
-            <label className="mb-2 block text-sm">
-              Certificate Description
-            </label>
-
-            <textarea
-              {...register("certificateDescription")}
-              rows={4}
-              className="w-full rounded-xl border border-gray-600 bg-[#1F2937] px-4 py-3 outline-none"
-              placeholder="Write certificate description..."
-            />
-
-            {errors.certificateDescription && (
-              <p className="mt-1 text-sm text-red-400">
-                {errors.certificateDescription.message}
-              </p>
-            )}
-          </div>
-
-          <div className="mt-8 flex justify-end gap-4">
+          <div className="mt-8 flex justify-end gap-4 shrink-0 border-t border-gray-700 pt-4">
             <button
               type="button"
               onClick={handleClose}
@@ -251,12 +235,12 @@ const StudentForm = ({ open, handleClose, student }) => {
               className="rounded-xl bg-cyan-500 px-6 py-3 font-medium text-black"
             >
               {mutation.isPending
-  ? student
-    ? "Updating..."
-    : "Saving..."
-  : student
-    ? "Update Student"
-    : "Save Student"}
+                ? student
+                  ? "Updating..."
+                  : "Saving..."
+                : student
+                  ? "Update Student"
+                  : "Save Student"}
             </button>
           </div>
         </form>

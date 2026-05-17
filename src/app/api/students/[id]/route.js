@@ -18,7 +18,9 @@ export async function PUT(req, context) {
     body.email = body.email.toLowerCase();
 
     // Find existing student
-    const existingStudent = await Student.findById(params.id);
+    const existingStudent = await Student.findById(
+      params.id
+    );
 
     if (!existingStudent) {
       return NextResponse.json(
@@ -26,16 +28,19 @@ export async function PUT(req, context) {
           success: false,
           message: "Student not found",
         },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
     // Prevent editing these fields
-    body.registrationNo = existingStudent.registrationNo;
+    body.registrationNo =
+      existingStudent.registrationNo;
 
-    body.courseName = existingStudent.courseName;
+    body.courseName =
+      existingStudent.courseName;
 
-    const validation = studentSchema.safeParse(body);
+    const validation =
+      studentSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -43,12 +48,18 @@ export async function PUT(req, context) {
           success: false,
           errors: validation.error.flatten(),
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
-    const updatedStudent = await Student.findByIdAndUpdate(params.id, body, {
-      returnDocument: "after",
+    const updatedStudent =
+      await Student.findByIdAndUpdate(params.id, body, {
+  new: true,
+});
+
+    return NextResponse.json({
+      success: true,
+      data: updatedStudent,
     });
   } catch (error) {
     console.log(error);
@@ -58,7 +69,7 @@ export async function PUT(req, context) {
         success: false,
         message: "Server Error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
